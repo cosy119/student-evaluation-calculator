@@ -3,14 +3,14 @@ import {
   ArrowDown, ArrowUp, CaretDown, CaretUp, ChartDonut, Check, DownloadSimple,
   FloppyDisk, Plus, Student, Trash, X,
 } from '@phosphor-icons/react'
-import { calculateModule, calculateTotal, formatSignificant, itemWeightedScore, toNumber } from './calculations'
+import { calculateModule, calculateTotal, formatDecimals, itemWeightedScore, toNumber } from './calculations'
 import { createEmptyData, createItem, createModule, createSampleData } from './sampleData'
 import { loadData, saveData } from './storage'
 import type { AppData, EvaluationModule, ScoreItem } from './types'
 
 type NoticeState = { message: string; undoData?: AppData } | null
 
-const format = (value: number) => formatSignificant(value)
+const format = (value: number) => formatDecimals(value)
 const isNegative = (value: string) => value !== '' && toNumber(value) < 0
 
 function App() {
@@ -207,7 +207,7 @@ function App() {
             </div>
             <div className="formula-note">
               <strong>计算方式</strong>
-              <p>条目分数 × 条目权重得到模块分，再汇总所有模块。结果统一显示 6 位有效数字。</p>
+              <p>条目分数 × 条目权重得到模块分，再汇总所有模块。结果统一保留 6 位小数。</p>
             </div>
           </aside>
         </div>

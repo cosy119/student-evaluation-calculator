@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style'
-import { calculateModule, calculateTotal, itemWeightedScore, roundToSignificant, toNonNegative, toNumber } from './calculations'
+import { calculateModule, calculateTotal, itemWeightedScore, roundToDecimals, toNonNegative, toNumber } from './calculations'
 import type { AppData } from './types'
 
 const headerStyle = {
@@ -16,6 +16,12 @@ const totalStyle = {
 const styleSheet = (sheet: XLSX.WorkSheet, widths: number[], totalRow?: number) => {
   sheet['!cols'] = widths.map((wch) => ({ wch }))
   const range = XLSX.utils.decode_range(sheet['!ref'] ?? 'A1:A1')
+  for (let row = 1; row <= range.e.r; row += 1) {
+    for (let column = range.s.c; column <= range.e.c; column += 1) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })]
+      if (cell?.t === 'n') cell.z = '0.000000'
+    }
+  }
   for (let column = range.s.c; column <= range.e.c; column += 1) {
     const header = sheet[XLSX.utils.encode_cell({ r: 0, c: column })]
     if (header) header.s = headerStyle
@@ -52,14 +58,14 @@ export const exportToExcel = (data: AppData) => {
     module.items.forEach((item) => {
       detailRows.push([
         data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
-        item.name || '未命名条目', roundToSignificant(toNumber(item.score)),
-        roundToSignificant(toNonNegative(item.weight)), roundToSignificant(itemWeightedScore(item)), '',
+        item.name || '未命名条目', roundToDecimals(toNumber(item.score)),
+        roundToDecimals(toNonNegative(item.weight)), roundToDecimals(itemWeightedScore(item)), '',
       ])
     })
     detailRows.push([
       data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
       module.items.length === 0 ? '模块小计（无条目）' : '模块小计',
-      '', '', '', roundToSignificant(result.rawScore),
+      '', '', '', roundToDecimals(result.rawScore),
     ])
     subtotalRows.push(detailRows.length - 1)
   })
@@ -70,12 +76,12 @@ export const exportToExcel = (data: AppData) => {
     summaryRows.push([
       module.name || '未命名模块',
       module.items.length,
-      roundToSignificant(result.rawScore),
+      roundToDecimals(result.rawScore),
     ])
   })
   summaryRows.push([
     '最终总分', '',
-    roundToSignificant(calculateTotal(data.modules)),
+    roundToDecimals(calculateTotal(data.modules)),
   ])
 
   const detailSheet = XLSX.utils.aoa_to_sheet(detailRows)

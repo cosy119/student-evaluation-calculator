@@ -9,19 +9,14 @@ export const toNumber = (value: string): number => {
 
 export const toNonNegative = (value: string): number => Math.max(0, toNumber(value))
 
-export const roundToSignificant = (value: number, digits = 6): number => {
+export const roundToDecimals = (value: number, digits = 6): number => {
   if (!Number.isFinite(value) || value === 0) return 0
-  return Number(value.toPrecision(digits))
+  const factor = 10 ** digits
+  return Math.round((value + Number.EPSILON) * factor) / factor
 }
 
-export const formatSignificant = (value: number, digits = 6): string => {
-  if (!Number.isFinite(value) || value === 0) return '0.00000'
-  const magnitude = Math.floor(Math.log10(Math.abs(value)))
-  const decimalPlaces = digits - magnitude - 1
-  if (decimalPlaces >= 0 && decimalPlaces <= 20) return value.toFixed(decimalPlaces)
-  if (decimalPlaces < 0 && magnitude < 21) return roundToSignificant(value, digits).toFixed(0)
-  return value.toPrecision(digits)
-}
+export const formatDecimals = (value: number, digits = 6): string =>
+  Number.isFinite(value) ? roundToDecimals(value, digits).toFixed(digits) : (0).toFixed(digits)
 
 export const itemWeightedScore = (item: ScoreItem): number =>
   toNumber(item.score) * toNonNegative(item.weight)
