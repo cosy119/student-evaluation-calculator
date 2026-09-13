@@ -8,7 +8,6 @@ export interface ScoreItem {
 export interface EvaluationModule {
   id: string
   name: string
-  ratio: string
   collapsed: boolean
   items: ScoreItem[]
 }
@@ -21,5 +20,4 @@ export interface AppData {
 
 export interface ModuleResult {
   rawScore: number
-  contribution: number
 }

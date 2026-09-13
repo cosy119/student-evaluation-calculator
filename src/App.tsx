@@ -3,7 +3,7 @@ import {
   ArrowDown, ArrowUp, CaretDown, CaretUp, ChartDonut, Check, DownloadSimple,
   FloppyDisk, Plus, Student, Trash, X,
 } from '@phosphor-icons/react'
-import { calculateModule, calculateRatioTotal, calculateTotal, formatSignificant, itemWeightedScore, toNonNegative, toNumber } from './calculations'
+import { calculateModule, calculateTotal, formatSignificant, itemWeightedScore, toNumber } from './calculations'
 import { createEmptyData, createItem, createModule, createSampleData } from './sampleData'
 import { loadData, saveData } from './storage'
 import type { AppData, EvaluationModule, ScoreItem } from './types'
@@ -19,9 +19,7 @@ function App() {
   const [saved, setSaved] = useState(true)
   const [exporting, setExporting] = useState(false)
   const noticeTimer = useRef<number | undefined>(undefined)
-  const ratioTotal = useMemo(() => calculateRatioTotal(data.modules), [data.modules])
   const total = useMemo(() => calculateTotal(data.modules), [data.modules])
-  const ratioBalanced = Math.abs(ratioTotal - 100) < 0.000001
 
   useEffect(() => {
     setSaved(false)
@@ -197,23 +195,19 @@ function App() {
           <aside className="summary-card" aria-label="结果汇总">
             <div className="summary-title"><ChartDonut size={22} weight="duotone" /><h3>结果汇总</h3></div>
             <div className="total-score"><span>最终综测总分</span><strong>{format(total)}</strong></div>
-            <div className={`ratio-status ${ratioBalanced ? 'balanced' : 'warning'}`}>
-              <div><span>模块比例合计</span><strong>{format(ratioTotal)}%</strong></div>
-              <p>{ratioBalanced ? '比例分配完整' : '比例合计不是 100%，当前仍按已填比例计算。'}</p>
-            </div>
             <div className="summary-list">
               {data.modules.length === 0 ? <p className="summary-empty">添加模块后，这里会显示得分构成。</p> : data.modules.map((module, index) => {
                 const result = calculateModule(module)
                 return <div className="summary-row" key={module.id}>
                   <span className={`module-dot tone-${index % 4}`} aria-hidden="true" />
-                  <div><strong>{module.name || '未命名模块'}</strong><small>原始分 {format(result.rawScore)} × {format(toNonNegative(module.ratio))}%</small></div>
-                  <b>{format(result.contribution)}</b>
+                  <div><strong>{module.name || '未命名模块'}</strong><small>{module.items.length} 个评分条目</small></div>
+                  <b>{format(result.rawScore)}</b>
                 </div>
               })}
             </div>
             <div className="formula-note">
               <strong>计算方式</strong>
-              <p>条目分数 × 条目权重，再乘以模块比例，最后汇总所有模块。结果统一显示 6 位有效数字。</p>
+              <p>条目分数 × 条目权重得到模块分，再汇总所有模块。结果统一显示 6 位有效数字。</p>
             </div>
           </aside>
         </div>
@@ -242,7 +236,6 @@ function ModuleCard({ module, index, moduleCount, onUpdate, onUpdateItem, onAddI
     <div className="module-header">
       <span className={`module-index tone-bg-${index % 4}`}>{String(index + 1).padStart(2, '0')}</span>
       <div className="module-name-field"><label htmlFor={`module-name-${module.id}`}>模块名称</label><input id={`module-name-${module.id}`} value={module.name} onChange={(event) => onUpdate({ name: event.target.value })} placeholder="例如：思想品德" /></div>
-      <label className="ratio-field">模块比例<div className="input-with-unit"><input aria-label={`${module.name}模块比例`} type="number" min="0" step="0.01" value={module.ratio} onChange={(event) => onUpdate({ ratio: event.target.value })} /><span>%</span></div>{isNegative(module.ratio) && <small className="field-error">比例不能为负数</small>}</label>
       <div className="module-actions">
         <button className="icon-button" aria-label="上移模块" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUp size={18} /></button>
         <button className="icon-button" aria-label="下移模块" disabled={index === moduleCount - 1} onClick={() => onMove(1)}><ArrowDown size={18} /></button>
@@ -266,10 +259,10 @@ function ModuleCard({ module, index, moduleCount, onUpdate, onUpdateItem, onAddI
       </div>
       <div className="module-footer">
         <button className="add-item-button" onClick={onAddItem}><Plus size={17} weight="bold" />添加条目</button>
-        <div className="module-totals"><span>模块原始分 <strong>{format(result.rawScore)}</strong></span><span className="divider" /><span>贡献分 <strong>{format(result.contribution)}</strong></span></div>
+        <div className="module-totals"><span>模块得分 <strong>{format(result.rawScore)}</strong></span></div>
       </div>
     </>}
-    {module.collapsed && <div className="collapsed-summary"><span>{module.items.length} 个条目</span><span>贡献分 <strong>{format(result.contribution)}</strong></span></div>}
+    {module.collapsed && <div className="collapsed-summary"><span>{module.items.length} 个条目</span><span>模块得分 <strong>{format(result.rawScore)}</strong></span></div>}
   </article>
 }
 

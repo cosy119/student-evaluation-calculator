@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { calculateModule, calculateRatioTotal, calculateTotal, formatSignificant, itemWeightedScore, isValidAppData, roundToSignificant, toNumber } from './calculations'
+import { calculateModule, calculateTotal, formatSignificant, itemWeightedScore, isValidAppData, roundToSignificant, toNumber } from './calculations'
 import type { EvaluationModule, ScoreItem } from './types'
 
 const item = (score: string, weight: string): ScoreItem => ({ id: crypto.randomUUID(), name: '测试项', score, weight })
-const module = (ratio: string, items: ScoreItem[]): EvaluationModule => ({ id: crypto.randomUUID(), name: '测试模块', ratio, collapsed: false, items })
+const module = (items: ScoreItem[]): EvaluationModule => ({ id: crypto.randomUUID(), name: '测试模块', collapsed: false, items })
 
 describe('综测计算', () => {
   it('将空输入和非法数字按 0 处理', () => {
@@ -18,23 +18,21 @@ describe('综测计算', () => {
     expect(itemWeightedScore(item('-3.5', '2'))).toBe(-7)
   })
 
-  it('负权重和负模块比例在计算时按 0 处理', () => {
+  it('负权重在计算时按 0 处理', () => {
     expect(itemWeightedScore(item('8', '-2'))).toBe(0)
-    expect(calculateModule(module('-30', [item('10', '1')])).contribution).toBe(0)
   })
 
-  it('计算模块原始分与贡献分', () => {
-    expect(calculateModule(module('40', [item('10', '1'), item('5', '2')]))).toEqual({ rawScore: 20, contribution: 8 })
+  it('按条目权重计算模块得分', () => {
+    expect(calculateModule(module([item('10', '1'), item('5', '2')]))).toEqual({ rawScore: 20 })
   })
 
   it('空模块按 0 分计算', () => {
-    expect(calculateModule(module('30', []))).toEqual({ rawScore: 0, contribution: 0 })
+    expect(calculateModule(module([]))).toEqual({ rawScore: 0 })
   })
 
-  it('模块比例无需等于 100 也可汇总', () => {
-    const modules = [module('20', [item('50', '1')]), module('30', [item('100', '1')])]
-    expect(calculateRatioTotal(modules)).toBe(50)
-    expect(calculateTotal(modules)).toBe(40)
+  it('直接汇总各模块得分', () => {
+    const modules = [module([item('50', '1')]), module([item('100', '1')])]
+    expect(calculateTotal(modules)).toBe(150)
   })
 
   it('数值按 6 位有效数字舍入和显示', () => {

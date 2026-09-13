@@ -30,15 +30,11 @@ export const calculateModule = (module: EvaluationModule): ModuleResult => {
   const rawScore = module.items.reduce((sum, item) => sum + itemWeightedScore(item), 0)
   return {
     rawScore,
-    contribution: rawScore * toNonNegative(module.ratio) / 100,
   }
 }
 
 export const calculateTotal = (modules: EvaluationModule[]): number =>
-  modules.reduce((sum, module) => sum + calculateModule(module).contribution, 0)
-
-export const calculateRatioTotal = (modules: EvaluationModule[]): number =>
-  modules.reduce((sum, module) => sum + toNonNegative(module.ratio), 0)
+  modules.reduce((sum, module) => sum + calculateModule(module).rawScore, 0)
 
 export const isValidAppData = (value: unknown): value is AppData => {
   if (!value || typeof value !== 'object') return false
@@ -50,7 +46,6 @@ export const isValidAppData = (value: unknown): value is AppData => {
       module
       && typeof module.id === 'string'
       && typeof module.name === 'string'
-      && typeof module.ratio === 'string'
       && typeof module.collapsed === 'boolean'
       && Array.isArray(module.items)
       && module.items.every((item) =>

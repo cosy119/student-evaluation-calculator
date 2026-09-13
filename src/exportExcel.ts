@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style'
-import { calculateModule, calculateRatioTotal, calculateTotal, itemWeightedScore, roundToSignificant, toNonNegative, toNumber } from './calculations'
+import { calculateModule, calculateTotal, itemWeightedScore, roundToSignificant, toNonNegative, toNumber } from './calculations'
 import type { AppData } from './types'
 
 const headerStyle = {
@@ -43,7 +43,7 @@ export const sanitizeFileNamePart = (value: string): string => {
 
 export const exportToExcel = (data: AppData) => {
   const detailRows: (string | number)[][] = [[
-    '学生姓名', '学号', '模块', '模块比例(%)', '条目名称', '分数', '权重', '条目加权分', '模块贡献分',
+    '学生姓名', '学号', '模块', '条目名称', '分数', '权重倍数', '条目加权分', '模块得分',
   ]]
 
   const subtotalRows: number[] = []
@@ -52,40 +52,38 @@ export const exportToExcel = (data: AppData) => {
     module.items.forEach((item) => {
       detailRows.push([
         data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
-        roundToSignificant(toNonNegative(module.ratio)), item.name || '未命名条目', roundToSignificant(toNumber(item.score)),
+        item.name || '未命名条目', roundToSignificant(toNumber(item.score)),
         roundToSignificant(toNonNegative(item.weight)), roundToSignificant(itemWeightedScore(item)), '',
       ])
     })
     detailRows.push([
       data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
-      roundToSignificant(toNonNegative(module.ratio)), module.items.length === 0 ? '模块小计（无条目）' : '模块小计',
-      '', '', '', roundToSignificant(result.contribution),
+      module.items.length === 0 ? '模块小计（无条目）' : '模块小计',
+      '', '', '', roundToSignificant(result.rawScore),
     ])
     subtotalRows.push(detailRows.length - 1)
   })
 
-  const summaryRows: (string | number)[][] = [['模块', '模块原始分', '模块比例(%)', '模块贡献分']]
+  const summaryRows: (string | number)[][] = [['模块', '条目数量', '模块得分']]
   data.modules.forEach((module) => {
     const result = calculateModule(module)
     summaryRows.push([
       module.name || '未命名模块',
+      module.items.length,
       roundToSignificant(result.rawScore),
-      roundToSignificant(toNonNegative(module.ratio)),
-      roundToSignificant(result.contribution),
     ])
   })
   summaryRows.push([
-    '合计', '',
-    roundToSignificant(calculateRatioTotal(data.modules)),
+    '最终总分', '',
     roundToSignificant(calculateTotal(data.modules)),
   ])
 
   const detailSheet = XLSX.utils.aoa_to_sheet(detailRows)
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows)
-  styleSheet(detailSheet, [14, 18, 18, 15, 22, 12, 12, 16, 16])
-  styleSheet(summarySheet, [22, 18, 18, 18], summaryRows.length - 1)
+  styleSheet(detailSheet, [14, 18, 18, 22, 12, 14, 16, 16])
+  styleSheet(summarySheet, [22, 14, 18], summaryRows.length - 1)
   subtotalRows.forEach((row) => {
-    for (let column = 0; column < 9; column += 1) {
+    for (let column = 0; column < 8; column += 1) {
       const cell = detailSheet[XLSX.utils.encode_cell({ r: row, c: column })]
       if (cell) cell.s = totalStyle
     }
