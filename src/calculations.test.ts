@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculateModule, calculateRatioTotal, calculateTotal, itemWeightedScore, isValidAppData, toNumber } from './calculations'
+import { calculateModule, calculateRatioTotal, calculateTotal, formatSignificant, itemWeightedScore, isValidAppData, roundToSignificant, toNumber } from './calculations'
 import type { EvaluationModule, ScoreItem } from './types'
 
 const item = (score: string, weight: string): ScoreItem => ({ id: crypto.randomUUID(), name: '测试项', score, weight })
@@ -35,6 +35,14 @@ describe('综测计算', () => {
     const modules = [module('20', [item('50', '1')]), module('30', [item('100', '1')])]
     expect(calculateRatioTotal(modules)).toBe(50)
     expect(calculateTotal(modules)).toBe(40)
+  })
+
+  it('数值按 6 位有效数字舍入和显示', () => {
+    expect(roundToSignificant(12.3456789)).toBe(12.3457)
+    expect(roundToSignificant(0.00123456789)).toBe(0.00123457)
+    expect(formatSignificant(12.3)).toBe('12.3000')
+    expect(formatSignificant(0)).toBe('0.00000')
+    expect(formatSignificant(1234567)).toBe('1234570')
   })
 
   it('拒绝结构损坏的本地数据', () => {

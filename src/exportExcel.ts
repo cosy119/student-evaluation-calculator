@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style'
-import { calculateModule, calculateRatioTotal, calculateTotal, itemWeightedScore, toNonNegative, toNumber } from './calculations'
+import { calculateModule, calculateRatioTotal, calculateTotal, itemWeightedScore, roundToSignificant, toNonNegative, toNumber } from './calculations'
 import type { AppData } from './types'
 
 const headerStyle = {
@@ -52,14 +52,14 @@ export const exportToExcel = (data: AppData) => {
     module.items.forEach((item) => {
       detailRows.push([
         data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
-        toNonNegative(module.ratio), item.name || '未命名条目', toNumber(item.score),
-        toNonNegative(item.weight), itemWeightedScore(item), '',
+        roundToSignificant(toNonNegative(module.ratio)), item.name || '未命名条目', roundToSignificant(toNumber(item.score)),
+        roundToSignificant(toNonNegative(item.weight)), roundToSignificant(itemWeightedScore(item)), '',
       ])
     })
     detailRows.push([
       data.studentName || '未填写', data.studentId || '未填写', module.name || '未命名模块',
-      toNonNegative(module.ratio), module.items.length === 0 ? '模块小计（无条目）' : '模块小计',
-      '', '', '', result.contribution,
+      roundToSignificant(toNonNegative(module.ratio)), module.items.length === 0 ? '模块小计（无条目）' : '模块小计',
+      '', '', '', roundToSignificant(result.contribution),
     ])
     subtotalRows.push(detailRows.length - 1)
   })
@@ -67,9 +67,18 @@ export const exportToExcel = (data: AppData) => {
   const summaryRows: (string | number)[][] = [['模块', '模块原始分', '模块比例(%)', '模块贡献分']]
   data.modules.forEach((module) => {
     const result = calculateModule(module)
-    summaryRows.push([module.name || '未命名模块', result.rawScore, toNonNegative(module.ratio), result.contribution])
+    summaryRows.push([
+      module.name || '未命名模块',
+      roundToSignificant(result.rawScore),
+      roundToSignificant(toNonNegative(module.ratio)),
+      roundToSignificant(result.contribution),
+    ])
   })
-  summaryRows.push(['合计', '', calculateRatioTotal(data.modules), calculateTotal(data.modules)])
+  summaryRows.push([
+    '合计', '',
+    roundToSignificant(calculateRatioTotal(data.modules)),
+    roundToSignificant(calculateTotal(data.modules)),
+  ])
 
   const detailSheet = XLSX.utils.aoa_to_sheet(detailRows)
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows)
